@@ -179,18 +179,15 @@
   - 500 Internal Server Error (AI failure)
 
 #### GET /api/generations
-- Description: List past generation sessions for user, including model used, text metrics, and generation statistics.
-- Query Params: pagination as in flashcards
-- Response: Returns paginated list of generation sessions with basic metadata
+- Description: A view that allows you to accept text from the user and enable the generation of flashcards using the "Generate flashcards" button, which invokes the POST /api/generations method
 - Errors:
-  - 401 Unauthorized
+  - 404 Not Found
 
 #### GET /api/generations/{id}
-- Description: Retrieve detailed information about a specific generation session, including source text metrics, generation duration, and model details.
+- Description: Retrieve detailed information about a specific generation, including its flashcards.
 - Path Parameter: `id`
-- Response: Returns complete generation session metadata
+- Response: Generation details and associated flashcards.
 - Errors:
-  - 401 Unauthorized
   - 404 Not Found
 
 #### GET /api/generation-error-logs
