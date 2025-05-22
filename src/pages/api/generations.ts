@@ -9,6 +9,36 @@ export const prerender = false;
 const GENERATION_TIMEOUT_MS = 60000;
 
 /**
+ * GET /api/generations
+ *
+ * Endpoint for accessing the flashcard generation UI
+ * Redirects to the generations page
+ *
+ * @returns Redirect to the generations UI page
+ */
+export const GET: APIRoute = async () => {
+  try {
+    // Redirect to the generations page
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/generations",
+      },
+    });
+  } catch (error) {
+    console.error("Error in generations GET endpoint:", error);
+    // Return general error response
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};
+
+/**
  * POST /api/generations
  *
  * Endpoint for creating new flashcard generation from source text

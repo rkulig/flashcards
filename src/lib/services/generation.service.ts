@@ -1,14 +1,29 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
 import crypto from "crypto";
-import type { FlashcardInsert, FlashcardProposalDto, GenerationInsert, GenerationErrorLogInsert } from "../../types";
+import type { FlashcardProposalDto, GenerationInsert, GenerationErrorLogInsert } from "../../types";
+import { OpenRouterService, type Message } from "./openrouter.service";
 
 /**
  * Service responsible for handling AI-powered flashcard generation
  * and related database operations
  */
 export class GenerationService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  private openRouter: OpenRouterService;
+  private defaultModel = "gpt-4o-mini";
+
+  constructor(
+    private readonly supabase: SupabaseClient,
+    openRouter?: OpenRouterService
+  ) {
+    this.openRouter =
+      openRouter ||
+      new OpenRouterService({
+        apiKey: import.meta.env.OPENROUTER_API_KEY as string,
+        baseUrl: (import.meta.env.OPENROUTER_BASE_URL as string) || undefined,
+        defaultModel: (import.meta.env.OPENROUTER_DEFAULT_MODEL as string) || this.defaultModel,
+      });
+  }
 
   /**
    * Generates flashcards from the provided source text using AI
@@ -26,12 +41,13 @@ export class GenerationService {
     const startTime = performance.now();
     const sourceTextHash = this.hashSourceText(sourceText);
     const sourceTextLength = sourceText.length;
+    const model = (import.meta.env.OPENROUTER_DEFAULT_MODEL as string) || this.defaultModel;
 
     try {
       // Step 1: Create generation metadata record
       const { data: generationData, error: generationError } = await this.createGeneration({
         user_id: DEFAULT_USER_ID,
-        model: "mock-ai-model", // Using mock model for development
+        model,
         source_text_hash: sourceTextHash,
         source_text_length: sourceTextLength,
         generated_count: 0,
@@ -44,26 +60,11 @@ export class GenerationService {
 
       const generationId = generationData[0].id;
 
-      // Step 2: Call AI service to generate flashcards (using mock for now)
-      const flashcardProposals = await this.callAiService(sourceText);
+      // Step 2: Call AI service to generate flashcards
+      const flashcardProposals = await this.callAiService(sourceText, model);
       const generatedCount = flashcardProposals.length;
 
-      // Step 3: Insert flashcard proposals into database
-      const flashcardInserts: FlashcardInsert[] = flashcardProposals.map((proposal) => ({
-        user_id: DEFAULT_USER_ID,
-        generation_id: generationId,
-        front: proposal.front,
-        back: proposal.back,
-        source: proposal.source,
-      }));
-
-      const { error: flashcardsError } = await this.supabase.from("flashcards").insert(flashcardInserts);
-
-      if (flashcardsError) {
-        throw new Error(`Failed to insert flashcards: ${flashcardsError.message}`);
-      }
-
-      // Step 4: Update generation record with final metrics
+      // Step 3: Update generation record with final metrics (but don't save flashcards to database)
       const generationDuration = Math.round(performance.now() - startTime);
       const { error: updateError } = await this.supabase
         .from("generations")
@@ -77,7 +78,7 @@ export class GenerationService {
         throw new Error(`Failed to update generation record: ${updateError.message}`);
       }
 
-      // Step 5: Return response DTO
+      // Step 4: Return response DTO with proposals (but don't save to database)
       return {
         generation_id: generationId,
         generated_count: generatedCount,
@@ -85,7 +86,7 @@ export class GenerationService {
       };
     } catch (error) {
       // Log error and rethrow
-      await this.logGenerationError(error, DEFAULT_USER_ID, sourceTextHash, sourceTextLength);
+      await this.logGenerationError(error, DEFAULT_USER_ID, sourceTextHash, sourceTextLength, model);
       throw error;
     }
   }
@@ -98,67 +99,170 @@ export class GenerationService {
   }
 
   /**
-   * Mocks the AI service call during development
-   * To be replaced with actual AI service integration
+   * Calls the OpenRouter AI service to generate flashcards from the source text
    */
-  private async callAiService(sourceText: string): Promise<FlashcardProposalDto[]> {
-    // Mock implementation for development
-    // This would be replaced with actual AI service integration
-    console.log(`Mock AI service called with text of length: ${sourceText.length}`);
+  private async callAiService(sourceText: string, model: string): Promise<FlashcardProposalDto[]> {
+    // Define the flashcard schema for structured output
+    const flashcardSchema = {
+      name: "flashcards",
+      strict: true,
+      schema: {
+        type: "object",
+        properties: {
+          flashcards: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                front: {
+                  type: "string",
+                  description: "The front side of the flashcard (question or concept)",
+                },
+                back: {
+                  type: "string",
+                  description: "The back side of the flashcard (answer or explanation)",
+                },
+              },
+              required: ["front", "back"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["flashcards"],
+        additionalProperties: false,
+      },
+    };
 
-    // Simulate AI processing time (between 1-3 seconds)
-    const processingTime = 1000 + Math.random() * 2000;
-    await new Promise((resolve) => setTimeout(resolve, processingTime));
-
-    // Base flashcards that are always returned
-    const baseFlashcards: FlashcardProposalDto[] = [
+    // Setup the messages for the AI service
+    const messages: Message[] = [
       {
-        front: "What is the capital of France?",
-        back: "Paris",
-        source: "ai-full",
+        role: "system",
+        content:
+          "You are an AI assistant that creates educational flashcards from text. Create concise, clear flashcards that capture key concepts, definitions, and facts from the provided text. Focus on important information that would be valuable to remember.",
       },
       {
-        front: "Who wrote 'Romeo and Juliet'?",
-        back: "William Shakespeare",
-        source: "ai-full",
-      },
-      {
-        front: "What is the chemical symbol for water?",
-        back: "H2O",
-        source: "ai-full",
+        role: "user",
+        content: `Create flashcards from the following text. Extract key concepts, definitions, facts, and relationships that would be valuable to remember. Format each flashcard with a clear question or concept on the front and a concise answer or explanation on the back.\n\n${sourceText}`,
       },
     ];
 
-    // Add some flashcards based on text length to simulate dynamic generation
-    if (sourceText.length > 3000) {
-      baseFlashcards.push({
-        front: "What is the largest planet in our solar system?",
-        back: "Jupiter",
-        source: "ai-full",
+    try {
+      // Call the OpenRouter service with JSON schema response format
+      const response = await this.openRouter.chatCompletion(messages, {
+        modelName: model,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: flashcardSchema,
+        },
+        params: {
+          temperature: 0.5,
+          max_tokens: 2000,
+        },
       });
-    }
 
-    if (sourceText.length > 5000) {
-      baseFlashcards.push({
-        front: "Who developed the theory of relativity?",
-        back: "Albert Einstein",
-        source: "ai-full",
-      });
-    }
+      // Process the response
+      const data = response.data as { flashcards: { front: string; back: string }[] };
 
-    return baseFlashcards;
+      // Convert to FlashcardProposalDto format
+      return data.flashcards.map((card) => ({
+        front: card.front,
+        back: card.back,
+        source: "ai-full" as const,
+      }));
+    } catch (error) {
+      console.error("Error calling OpenRouter API:", error);
+
+      // Fallback approach if JSON schema fails - try without schema
+      if (error instanceof Error && error.message.includes("Invalid schema")) {
+        console.log("Retrying without JSON schema...");
+        return await this.callAiServiceWithoutSchema(sourceText, model);
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Fallback method that calls the OpenRouter API without JSON schema
+   * This is used when the JSON schema approach fails
+   */
+  private async callAiServiceWithoutSchema(sourceText: string, model: string): Promise<FlashcardProposalDto[]> {
+    const messages: Message[] = [
+      {
+        role: "system",
+        content:
+          "You are an AI assistant that creates educational flashcards from text. You will respond with a valid JSON array of flashcard objects, each with 'front' and 'back' properties.",
+      },
+      {
+        role: "user",
+        content: `Create flashcards from the following text. Extract key concepts, definitions, facts, and relationships that would be valuable to remember. Format your response as a valid JSON array with objects that have 'front' and 'back' properties. The 'front' should contain a clear question or concept, and the 'back' should contain a concise answer or explanation.
+
+Example format:
+[
+  {
+    "front": "Question or concept",
+    "back": "Answer or explanation"
+  },
+  {
+    "front": "Another question",
+    "back": "Another answer"
+  }
+]
+
+Source text:
+${sourceText}`,
+      },
+    ];
+
+    const response = await this.openRouter.chatCompletion(messages, {
+      modelName: model,
+      params: {
+        temperature: 0.5,
+        max_tokens: 2000,
+      },
+    });
+
+    try {
+      // Try to parse the response as JSON
+      const content = response.data as string;
+      const flashcards = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+
+      if (Array.isArray(flashcards)) {
+        return flashcards.map((card: { front: string; back: string }) => ({
+          front: card.front,
+          back: card.back,
+          source: "ai-full" as const,
+        }));
+      } else if (flashcards.flashcards && Array.isArray(flashcards.flashcards)) {
+        return flashcards.flashcards.map((card: { front: string; back: string }) => ({
+          front: card.front,
+          back: card.back,
+          source: "ai-full" as const,
+        }));
+      }
+      throw new Error("Invalid response format from AI service");
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+      throw new Error("Failed to parse flashcards from AI response");
+    }
   }
 
   /**
    * Logs generation errors to the database
    */
-  private async logGenerationError(error: unknown, userId: string, sourceTextHash: string, sourceTextLength: number) {
+  private async logGenerationError(
+    error: unknown,
+    userId: string,
+    sourceTextHash: string,
+    sourceTextLength: number,
+    model: string
+  ) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorLog: GenerationErrorLogInsert = {
       user_id: userId,
       error_code: "GEN_ERROR",
       error_message: errorMessage,
-      model: "mock-ai-model",
+      model,
       source_text_hash: sourceTextHash,
       source_text_length: sourceTextLength,
     };
