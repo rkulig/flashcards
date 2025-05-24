@@ -125,3 +125,26 @@ export type GenerationErrorLogDto = Pick<
   GenerationErrorLog,
   "id" | "error_code" | "error_message" | "model" | "source_text_hash" | "source_text_length" | "created_at" | "user_id"
 >;
+
+/**
+ * Authentication request DTO for POST /api/auth endpoint.
+ * Supports both login and registration modes.
+ */
+export interface AuthRequestDto {
+  email: string;
+  password: string;
+  mode: "login" | "register";
+}
+
+/**
+ * Authentication response DTO returned by POST /api/auth endpoint.
+ * Contains mock authentication data.
+ */
+export interface AuthResponseDto {
+  success: true;
+  data: {
+    userId: string;
+    token: string;
+  };
+  message: string;
+}
