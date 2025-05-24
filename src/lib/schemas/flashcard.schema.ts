@@ -16,6 +16,29 @@ export const flashcardSchema = z.object({
 });
 
 /**
+ * Schema for validating flashcard update request
+ * All fields are optional for partial updates
+ */
+export const flashcardUpdateSchema = z.object({
+  front: z
+    .string()
+    .min(3, "Front text must be at least 3 characters")
+    .max(200, "Front text cannot exceed 200 characters")
+    .optional(),
+  back: z
+    .string()
+    .min(3, "Back text must be at least 3 characters")
+    .max(500, "Back text cannot exceed 500 characters")
+    .optional(),
+  source: z
+    .enum(["manual", "ai-full", "ai-edited"], {
+      errorMap: () => ({ message: "Source must be one of: manual, ai-full, ai-edited" }),
+    })
+    .optional(),
+  generation_id: z.number().int().positive().nullable().optional(),
+});
+
+/**
  * Schema for validating flashcard creation batch request
  * Enforces business rules:
  * 1. Request must contain at least one flashcard but no more than 50

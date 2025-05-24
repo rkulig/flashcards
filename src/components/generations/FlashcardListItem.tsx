@@ -58,7 +58,7 @@ export default function FlashcardListItem({ proposal, index, onAccept, onEdit, o
   return (
     <div
       className={`border rounded-lg overflow-hidden transition-all
-                    ${proposal.isAccepted ? "border-neutral-300 dark:border-neutral-700" : "border-red-300 dark:border-red-800 opacity-70"}`}
+                    ${proposal.isAccepted ? "border-neutral-300 dark:border-neutral-700" : "border-red-300 dark:border-red-800"}`}
     >
       {/* Status indicator */}
       <div className="flex items-center p-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800">
@@ -132,7 +132,7 @@ export default function FlashcardListItem({ proposal, index, onAccept, onEdit, o
         <div className="flex border-t border-neutral-200 dark:border-neutral-800 divide-x divide-neutral-200 dark:divide-neutral-800">
           <Button
             variant="ghost"
-            className="flex-1 rounded-none py-2 h-auto text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+            className={`flex-1 rounded-none py-2 h-auto text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 ${proposal.isAccepted ? "opacity-50 cursor-not-allowed" : ""}`}
             onClick={() => onAccept(index)}
             disabled={proposal.isAccepted}
             data-testid="accept-button"
@@ -149,7 +149,7 @@ export default function FlashcardListItem({ proposal, index, onAccept, onEdit, o
           </Button>
           <Button
             variant="ghost"
-            className="flex-1 rounded-none py-2 h-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            className={`flex-1 rounded-none py-2 h-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 ${!proposal.isAccepted ? "opacity-50 cursor-not-allowed" : ""}`}
             onClick={() => onReject(index)}
             disabled={!proposal.isAccepted}
             data-testid="reject-button"
