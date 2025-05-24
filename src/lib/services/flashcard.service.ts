@@ -5,6 +5,7 @@ import type {
   FlashcardDto,
   FlashcardInsert,
   FlashcardsListResponseDto,
+  FlashcardUpdateDto,
 } from "../../types";
 
 /**
@@ -167,5 +168,66 @@ export class FlashcardService {
     }
 
     return data as FlashcardDto;
+  }
+
+  /**
+   * Updates a flashcard by ID
+   * @param flashcardId Flashcard ID to update
+   * @param updateData Partial flashcard data to update
+   * @param userId User ID for authorization check
+   * @returns The updated flashcard
+   * @throws Error if flashcard is not found or doesn't belong to the user
+   */
+  async updateFlashcard(flashcardId: number, updateData: FlashcardUpdateDto, userId: string): Promise<FlashcardDto> {
+    // First check if flashcard exists and belongs to user
+    await this.getFlashcardById(flashcardId, userId);
+
+    // If updating generation_id, validate it exists and belongs to user
+    if (updateData.generation_id !== undefined && updateData.generation_id !== null) {
+      await this.validateGeneration(updateData.generation_id, userId);
+    }
+
+    // Update the flashcard
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .update(updateData)
+      .eq("id", flashcardId)
+      .eq("user_id", userId)
+      .select("id, front, back, source, generation_id, created_at, updated_at")
+      .single();
+
+    if (error) {
+      console.error("Error updating flashcard:", error);
+      throw new Error("Failed to update flashcard", {
+        cause: { status: 500, details: error.message },
+      });
+    }
+
+    if (!data) {
+      throw new Error(`Flashcard with ID ${flashcardId} not found`, { cause: { status: 404 } });
+    }
+
+    return data as FlashcardDto;
+  }
+
+  /**
+   * Deletes a flashcard by ID
+   * @param flashcardId Flashcard ID to delete
+   * @param userId User ID for authorization check
+   * @throws Error if flashcard is not found or doesn't belong to the user
+   */
+  async deleteFlashcard(flashcardId: number, userId: string): Promise<void> {
+    // First check if flashcard exists and belongs to user
+    await this.getFlashcardById(flashcardId, userId);
+
+    // Delete the flashcard
+    const { error } = await this.supabase.from("flashcards").delete().eq("id", flashcardId).eq("user_id", userId);
+
+    if (error) {
+      console.error("Error deleting flashcard:", error);
+      throw new Error("Failed to delete flashcard", {
+        cause: { status: 500, details: error.message },
+      });
+    }
   }
 }
