@@ -1,11 +1,20 @@
 ---
 import "../styles/global.css";
+import { Navbar } from "../components/Navbar";
 
 interface Props {
   title?: string;
+  showNavbar?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", showNavbar = true } = Astro.props;
+
+// Get current path for navigation highlighting
+const currentPath = Astro.url.pathname;
+
+// Mock authentication state - in real app this would come from session/context
+// For now, we'll assume user is authenticated if they're not on auth page
+const isAuthenticated = currentPath !== "/auth";
 ---
 
 <!doctype html>
@@ -18,7 +27,10 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <slot />
+    {showNavbar && <Navbar client:load isAuthenticated={isAuthenticated} currentPath={currentPath} />}
+    <main>
+      <slot />
+    </main>
   </body>
 </html>
 
