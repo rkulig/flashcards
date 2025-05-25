@@ -3,17 +3,37 @@ import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
   isAuthenticated: boolean;
+  userEmail?: string;
   onLogout?: () => void;
   currentPath?: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogout, currentPath = "" }) => {
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
+export const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userEmail, onLogout, currentPath = "" }) => {
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        if (onLogout) {
+          onLogout();
+        }
+        // Redirect to auth page after logout
+        window.location.href = "/auth";
+      } else {
+        console.error("Logout failed");
+        // Still redirect to auth page even if logout failed
+        window.location.href = "/auth";
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still redirect to auth page even if logout failed
+      window.location.href = "/auth";
     }
-    // Redirect to auth page after logout
-    window.location.href = "/auth";
   };
 
   const isActive = (path: string) => {
@@ -59,9 +79,17 @@ export const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogout, curre
 
           {/* Authentication Section */}
           {isAuthenticated ? (
-            <Button variant="outline" size="sm" onClick={handleLogout} className="ml-2">
-              Wyloguj
-            </Button>
+            <div className="flex items-center space-x-3 ml-4">
+              {/* User Email */}
+              {userEmail && (
+                <span className="text-sm text-gray-600 hidden sm:inline truncate max-w-32">{userEmail}</span>
+              )}
+
+              {/* Logout Button */}
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-600 hover:text-gray-900">
+                Wyloguj
+              </Button>
+            </div>
           ) : (
             <a
               href="/auth"

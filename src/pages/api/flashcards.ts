@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 import { flashcardsCreateSchema } from "../../lib/schemas/flashcard.schema";
 import { FlashcardService } from "../../lib/services/flashcard.service";
 import type { FlashcardsCreateCommand } from "../../types";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
 
 export const prerender = false;
 
@@ -23,6 +22,16 @@ interface ErrorCause {
  */
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const url = new URL(request.url);
     const pageParam = url.searchParams.get("page");
     const limitParam = url.searchParams.get("limit");
@@ -33,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Retrieve flashcards
     const flashcardService = new FlashcardService(locals.supabase);
-    const result = await flashcardService.getFlashcards(DEFAULT_USER_ID, page, limit);
+    const result = await flashcardService.getFlashcards(locals.user.id, page, limit);
 
     // Return success response
     return new Response(JSON.stringify(result), {
@@ -78,6 +87,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Parse and validate request body
     const requestData = (await request.json()) as FlashcardsCreateCommand;
     const validationResult = flashcardsCreateSchema.safeParse(requestData);
@@ -95,7 +114,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Process flashcard creation through service
     const flashcardService = new FlashcardService(locals.supabase);
-    const result = await flashcardService.createFlashcards(validationResult.data.flashcards, DEFAULT_USER_ID);
+    const result = await flashcardService.createFlashcards(validationResult.data.flashcards, locals.user.id);
 
     // Return success response
     return new Response(JSON.stringify(result), {

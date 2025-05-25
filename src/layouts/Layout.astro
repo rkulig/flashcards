@@ -12,9 +12,9 @@ const { title = "10x Astro Starter", showNavbar = true } = Astro.props;
 // Get current path for navigation highlighting
 const currentPath = Astro.url.pathname;
 
-// Mock authentication state - in real app this would come from session/context
-// For now, we'll assume user is authenticated if they're not on auth page
-const isAuthenticated = currentPath !== "/auth";
+// Get authentication state from middleware
+const isAuthenticated = !!Astro.locals.user;
+const userEmail = Astro.locals.user?.email;
 ---
 
 <!doctype html>
@@ -27,7 +27,11 @@ const isAuthenticated = currentPath !== "/auth";
     <title>{title}</title>
   </head>
   <body>
-    {showNavbar && <Navbar client:load isAuthenticated={isAuthenticated} currentPath={currentPath} />}
+    {
+      showNavbar && (
+        <Navbar client:load isAuthenticated={isAuthenticated} userEmail={userEmail} currentPath={currentPath} />
+      )
+    }
     <main>
       <slot />
     </main>

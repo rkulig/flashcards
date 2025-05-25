@@ -48,6 +48,16 @@ export const GET: APIRoute = async () => {
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Parse and validate request body
     const requestData = await request.json();
     const validationResult = generateFlashCardsSchema.safeParse(requestData);
@@ -73,7 +83,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Race between the generation and timeout
-    const result = (await Promise.race([generationService.generateFlashcards(source_text), timeoutPromise])) as {
+    const result = (await Promise.race([
+      generationService.generateFlashcards(source_text, locals.user.id),
+      timeoutPromise,
+    ])) as {
       generation_id: number;
       generated_count: number;
       flashcards_proposals: { front: string; back: string; source: "ai-full" }[];
