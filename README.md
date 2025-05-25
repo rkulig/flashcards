@@ -27,6 +27,11 @@ A web application that enables quick creation and management of educational flas
   - Supabase (PostgreSQL, Auth)
 - **AI**
   - Openrouter.ai (multi-model LLMs)
+- **Testing**
+  - Vitest (unit tests)
+  - Testing Library React (component testing)
+  - Playwright (E2E tests)
+  - MSW (API mocking)
 - **CI/CD & Hosting**
   - GitHub Actions
   - Docker on DigitalOcean
@@ -81,6 +86,10 @@ A web application that enables quick creation and management of educational flas
 | `npm run build` | Build the production site                    |
 | `npm run preview` | Preview the built site locally             |
 | `npm run astro` | Run the Astro CLI                            |
+| `npm run test`  | Run unit tests with Vitest                  |
+| `npm run test:unit` | Run unit tests once                      |
+| `npm run test:e2e` | Run E2E tests with Playwright             |
+| `npm run test:coverage` | Generate test coverage report         |
 | `npm run lint`  | Run ESLint on all files                      |
 | `npm run lint:fix` | Auto-fix ESLint errors                    |
 | `npm run format` | Format codebase with Prettier               |
