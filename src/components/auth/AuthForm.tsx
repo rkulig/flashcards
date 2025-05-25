@@ -1,7 +1,6 @@
 import React, { useState, type ChangeEvent, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { AuthRequestDto, AuthResponseDto } from "@/types";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -75,13 +74,13 @@ export function AuthForm({ mode, onSuccess, onError, onRegisterSuccess }: AuthFo
     setSuccessMessage("");
 
     try {
-      const requestBody: AuthRequestDto = {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const requestBody = {
         email: formState.email,
         password: formState.password,
-        mode,
       };
 
-      const response = await fetch("/api/auth", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,12 +88,19 @@ export function AuthForm({ mode, onSuccess, onError, onRegisterSuccess }: AuthFo
         body: JSON.stringify(requestBody),
       });
 
-      if (response.ok) {
-        const data: AuthResponseDto = await response.json();
+      const data = await response.json();
 
+      if (response.ok && data.success) {
         if (mode === "register") {
           // Registration success - show message and switch to login
-          setSuccessMessage("Registration completed successfully! You can now sign in.");
+          if (data.data.needsConfirmation) {
+            setSuccessMessage(
+              "Registration successful! Please check your email for confirmation, then you can sign in."
+            );
+          } else {
+            setSuccessMessage("Registration completed successfully! You can now sign in.");
+          }
+
           setFormState({
             email: formState.email, // Keep email for convenience
             password: "",
@@ -104,30 +110,14 @@ export function AuthForm({ mode, onSuccess, onError, onRegisterSuccess }: AuthFo
           // Call the register success callback to switch to login mode
           onRegisterSuccess?.();
         } else {
-          // Login success - store token and redirect
-          localStorage.setItem("token", data.data.token);
-          localStorage.setItem("userId", data.data.userId);
-
+          // Login success - redirect
           onSuccess?.();
 
           // Redirect to flashcards page
           window.location.href = "/flashcards";
         }
       } else {
-        let errorMsg = "An error occurred, please try again later";
-
-        switch (response.status) {
-          case 400:
-            errorMsg = "Invalid data provided";
-            break;
-          case 401:
-            errorMsg = "Invalid login credentials";
-            break;
-          case 500:
-            errorMsg = "Server error, please try again later";
-            break;
-        }
-
+        const errorMsg = data.error || "An error occurred, please try again later";
         setErrorMessage(errorMsg);
         onError?.(errorMsg);
       }

@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
 import crypto from "crypto";
 import type { FlashcardProposalDto, GenerationInsert, GenerationErrorLogInsert } from "../../types";
 import { OpenRouterService, type Message } from "./openrouter.service";
@@ -34,9 +33,10 @@ export class GenerationService {
    * - Error handling and logging
    *
    * @param sourceText The text to generate flashcards from (1000-10000 characters)
+   * @param userId The ID of the authenticated user
    * @returns Object containing generation_id, generated_count, and flashcards_proposals
    */
-  async generateFlashcards(sourceText: string) {
+  async generateFlashcards(sourceText: string, userId: string) {
     // Setup generation metrics
     const startTime = performance.now();
     const sourceTextHash = this.hashSourceText(sourceText);
@@ -46,7 +46,7 @@ export class GenerationService {
     try {
       // Step 1: Create generation metadata record
       const { data: generationData, error: generationError } = await this.createGeneration({
-        user_id: DEFAULT_USER_ID,
+        user_id: userId,
         model,
         source_text_hash: sourceTextHash,
         source_text_length: sourceTextLength,
@@ -86,7 +86,7 @@ export class GenerationService {
       };
     } catch (error) {
       // Log error and rethrow
-      await this.logGenerationError(error, DEFAULT_USER_ID, sourceTextHash, sourceTextLength, model);
+      await this.logGenerationError(error, userId, sourceTextHash, sourceTextLength, model);
       throw error;
     }
   }

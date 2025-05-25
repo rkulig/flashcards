@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 import { flashcardUpdateSchema } from "../../../lib/schemas/flashcard.schema";
 import { FlashcardService } from "../../../lib/services/flashcard.service";
 import type { FlashcardUpdateDto } from "../../../types";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
 
 export const prerender = false;
 
@@ -20,6 +19,16 @@ interface ErrorCause {
  */
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const id = params.id;
 
     if (!id || isNaN(parseInt(id, 10))) {
@@ -34,7 +43,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const flashcardId = parseInt(id, 10);
     const flashcardService = new FlashcardService(locals.supabase);
 
-    const flashcard = await flashcardService.getFlashcardById(flashcardId, DEFAULT_USER_ID);
+    const flashcard = await flashcardService.getFlashcardById(flashcardId, locals.user.id);
 
     return new Response(JSON.stringify(flashcard), {
       status: 200,
@@ -78,6 +87,16 @@ export const GET: APIRoute = async ({ params, locals }) => {
  */
 export const PUT: APIRoute = async ({ params, request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
@@ -107,7 +126,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 
     // Update flashcard through service
     const flashcardService = new FlashcardService(locals.supabase);
-    const result = await flashcardService.updateFlashcard(Number(id), validationResult.data, DEFAULT_USER_ID);
+    const result = await flashcardService.updateFlashcard(Number(id), validationResult.data, locals.user.id);
 
     // Return success response
     return new Response(JSON.stringify(result), {
@@ -152,6 +171,16 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
  */
 export const DELETE: APIRoute = async ({ params, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const { id } = params;
 
     if (!id || isNaN(Number(id))) {
@@ -166,7 +195,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     // Delete flashcard through service
     const flashcardService = new FlashcardService(locals.supabase);
-    await flashcardService.deleteFlashcard(Number(id), DEFAULT_USER_ID);
+    await flashcardService.deleteFlashcard(Number(id), locals.user.id);
 
     // Return success response
     return new Response(
