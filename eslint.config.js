@@ -23,6 +23,14 @@ const baseConfig = tseslint.config({
   },
 });
 
+// Test files configuration - allow console statements
+const testConfig = tseslint.config({
+  files: ["**/*.{test,spec}.{js,jsx,ts,tsx}", "e2e/**/*.{js,jsx,ts,tsx}", "src/test/**/*.{js,jsx,ts,tsx}"],
+  rules: {
+    "no-console": "off",
+  },
+});
+
 const jsxA11yConfig = tseslint.config({
   files: ["**/*.{js,jsx,ts,tsx}"],
   extends: [jsxA11y.flatConfigs.recommended],
@@ -59,6 +67,7 @@ const reactConfig = tseslint.config({
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  testConfig,
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

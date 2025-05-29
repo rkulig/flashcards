@@ -3,6 +3,14 @@ import type { ReactElement } from "react";
 import { render } from "@testing-library/react";
 import type { RenderOptions } from "@testing-library/react";
 import { faker } from "@faker-js/faker";
+import type { FlashcardDto } from "../../types";
+
+// Interface for test user data
+interface TestUser {
+  id: string;
+  email: string;
+  emailConfirmedAt?: string;
+}
 
 // Custom render function z providerami
 const customRender = (ui: ReactElement, options?: Omit<RenderOptions, "wrapper">) => {
@@ -20,18 +28,18 @@ const customRender = (ui: ReactElement, options?: Omit<RenderOptions, "wrapper">
 };
 
 // Funkcje pomocnicze do generowania danych testowych
-export const createMockFlashcard = (overrides?: Partial<any>) => ({
-  id: faker.string.uuid(),
-  question: faker.lorem.sentence(),
-  answer: faker.lorem.paragraph(),
-  category: faker.lorem.word(),
-  difficulty: faker.helpers.arrayElement(["easy", "medium", "hard"]),
-  createdAt: faker.date.past().toISOString(),
-  updatedAt: faker.date.recent().toISOString(),
+export const createMockFlashcard = (overrides?: Partial<FlashcardDto>): FlashcardDto => ({
+  id: faker.number.int(),
+  front: faker.lorem.sentence(),
+  back: faker.lorem.paragraph(),
+  source: faker.helpers.arrayElement(["ai-full", "ai-edited", "manual"]),
+  generation_id: faker.number.int(),
+  created_at: faker.date.past().toISOString(),
+  updated_at: faker.date.recent().toISOString(),
   ...overrides,
 });
 
-export const createMockUser = (overrides?: Partial<any>) => ({
+export const createMockUser = (overrides?: Partial<TestUser>): TestUser => ({
   id: faker.string.uuid(),
   email: faker.internet.email(),
   emailConfirmedAt: faker.date.past().toISOString(),

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "../../db/supabase.client";
 import crypto from "crypto";
 import type { FlashcardProposalDto, GenerationInsert, GenerationErrorLogInsert } from "../../types";
 import { OpenRouterService, type Message } from "./openrouter.service";
+import { logger } from "../utils";
 
 /**
  * Service responsible for handling AI-powered flashcard generation
@@ -170,11 +171,11 @@ export class GenerationService {
         source: "ai-full" as const,
       }));
     } catch (error) {
-      console.error("Error calling OpenRouter API:", error);
+      logger.error("Error calling OpenRouter API:", error);
 
       // Fallback approach if JSON schema fails - try without schema
       if (error instanceof Error && error.message.includes("Invalid schema")) {
-        console.log("Retrying without JSON schema...");
+        logger.info("Retrying without JSON schema...");
         return await this.callAiServiceWithoutSchema(sourceText, model);
       }
 
@@ -242,7 +243,7 @@ ${sourceText}`,
       }
       throw new Error("Invalid response format from AI service");
     } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
+      logger.error("Failed to parse AI response:", parseError);
       throw new Error("Failed to parse flashcards from AI response");
     }
   }

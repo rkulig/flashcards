@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { flashcardUpdateSchema } from "../../../lib/schemas/flashcard.schema";
 import { FlashcardService } from "../../../lib/services/flashcard.service";
 import type { FlashcardUpdateDto } from "../../../types";
+import { logger } from "../../../lib/utils";
 
 export const prerender = false;
 
@@ -50,7 +51,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error(`Flashcard retrieval failed for ID ${params.id}:`, error);
+    logger.error("Error retrieving flashcard:", error);
 
     // Handle specific error types with custom status codes
     if (error instanceof Error) {
@@ -134,7 +135,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Flashcard update failed:", error);
+    logger.error("Error updating flashcard:", error);
 
     // Handle specific error types with custom status codes
     if (error instanceof Error) {
@@ -208,7 +209,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       }
     );
   } catch (error) {
-    console.error("Flashcard deletion failed:", error);
+    logger.error("Error deleting flashcard:", error);
 
     // Handle specific error types with custom status codes
     if (error instanceof Error) {

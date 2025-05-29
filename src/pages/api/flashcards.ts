@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { flashcardsCreateSchema } from "../../lib/schemas/flashcard.schema";
 import { FlashcardService } from "../../lib/services/flashcard.service";
 import type { FlashcardsCreateCommand } from "../../types";
+import { logger } from "../../lib/utils";
 
 export const prerender = false;
 
@@ -50,7 +51,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Flashcard retrieval failed:", error);
+    logger.error("Error fetching flashcards:", error);
 
     // Handle specific error types with custom status codes
     if (error instanceof Error) {
@@ -122,7 +123,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Flashcard creation failed:", error);
+    logger.error("Error creating flashcards:", error);
 
     // Handle specific error types with custom status codes
     if (error instanceof Error) {

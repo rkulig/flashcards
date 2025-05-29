@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { FlashcardDto, FlashcardsListResponseDto, FlashcardCreateDto, FlashcardUpdateDto } from "../../types";
 import FlashcardsList from "./FlashcardsList";
 import AddFlashcardButton from "./AddFlashcardButton";
 import FlashcardEditModal from "./FlashcardEditModal";
 import FlashcardCreateModal from "./FlashcardCreateModal";
 import { Button } from "../ui/button";
+import { logger } from "../../lib/utils";
 
 const FlashcardsPage: React.FC = () => {
   const [flashcards, setFlashcards] = useState<FlashcardDto[]>([]);
@@ -17,12 +18,7 @@ const FlashcardsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [flashcardToEdit, setFlashcardToEdit] = useState<FlashcardDto | null>(null);
 
-  // Load flashcards on component mount
-  useEffect(() => {
-    loadFlashcards();
-  }, [pagination.page]);
-
-  const loadFlashcards = async () => {
+  const loadFlashcards = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -38,11 +34,16 @@ const FlashcardsPage: React.FC = () => {
       setPagination(data.pagination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Błąd podczas ładowania fiszek");
-      console.error("Error loading flashcards:", err);
+      logger.error("Error loading flashcards:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit]);
+
+  // Load flashcards on component mount
+  useEffect(() => {
+    loadFlashcards();
+  }, [loadFlashcards]);
 
   const handleEdit = (id: number) => {
     const flashcard = flashcards.find((f) => f.id === id);
@@ -70,7 +71,7 @@ const FlashcardsPage: React.FC = () => {
       setFlashcards((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Błąd podczas usuwania fiszki");
-      console.error("Error deleting flashcard:", err);
+      logger.error("Error deleting flashcard:", err);
     }
   };
 
@@ -93,7 +94,7 @@ const FlashcardsPage: React.FC = () => {
       setIsCreateModalOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Błąd podczas tworzenia fiszki");
-      console.error("Error creating flashcard:", err);
+      logger.error("Error creating flashcard:", err);
     }
   };
 
@@ -119,7 +120,7 @@ const FlashcardsPage: React.FC = () => {
       setFlashcardToEdit(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Błąd podczas zapisywania fiszki");
-      console.error("Error updating flashcard:", err);
+      logger.error("Error updating flashcard:", err);
     }
   };
 
