@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { FlashcardCreateDto } from "../../types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -83,6 +83,9 @@ const FlashcardCreateModal: React.FC<FlashcardCreateModalProps> = ({ isOpen, onC
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Dodaj nową fiszkę</DialogTitle>
+          <DialogDescription>
+            Wypełnij pola poniżej, aby utworzyć nową fiszkę. Przód fiszki to pytanie, a tył to odpowiedź.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

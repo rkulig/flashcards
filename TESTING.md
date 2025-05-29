@@ -14,6 +14,7 @@ Ten projekt wykorzystuje kompleksowe środowisko testowe składające się z tes
 ### Testy E2E
 - **Playwright** - testy end-to-end w przeglądarce Chromium
 - **Page Object Model** - wzorzec organizacji testów E2E
+- **Automatic Database Cleanup** - automatyczne czyszczenie bazy danych po testach
 
 ## Struktura Katalogów
 
@@ -56,7 +57,7 @@ npm run test:watch
 
 ### Testy E2E (Playwright)
 ```bash
-# Uruchom testy E2E
+# Uruchom testy E2E (z automatycznym czyszczeniem bazy)
 npm run test:e2e
 
 # Uruchom testy E2E z interfejsem UI
@@ -67,6 +68,9 @@ npm run test:e2e:headed
 
 # Uruchom testy E2E w trybie debug
 npm run test:e2e:debug
+
+# Uruchom testy bez teardown (pomija czyszczenie bazy)
+npx playwright test --no-deps
 ```
 
 ## Pisanie Testów Jednostkowych
@@ -192,3 +196,34 @@ test('user can manage flashcards', async ({ page }) => {
 - Użyj `page.pause()` do zatrzymania testu
 - Sprawdź trace viewer dla analizy błędów
 - Użyj `--headed` do obserwacji testów w przeglądarce 
+
+## Czyszczenie Bazy Danych (Database Teardown)
+
+Projekt jest skonfigurowany z automatycznym czyszczeniem bazy danych po zakończeniu wszystkich testów E2E.
+
+### Jak to działa
+
+1. **Project Dependencies**: Konfiguracja Playwright włącza teardown po testach
+2. **Global Teardown**: `e2e/global.teardown.ts` uruchamia się automatycznie
+3. **Selektywne czyszczenie**: Usuwa tylko dane testowego użytkownika z `E2E_USERNAME_ID`
+4. **Bezpieczeństwo**: Chroni przed przypadkowym usunięciem danych innych użytkowników
+
+### Czyszczone tabele
+
+- `flashcards` - fiszki utworzone przez testowego użytkownika
+- `generations` - generacje AI utworzone podczas testów
+- `generation_error_logs` - logi błędów z testów
+
+### Konfiguracja środowiska
+
+Upewnij się, że `.env.test` zawiera:
+
+```env
+SUPABASE_URL=your_test_supabase_url
+SUPABASE_KEY=your_test_supabase_service_role_key
+E2E_USERNAME_ID=test_user_uuid
+E2E_USERNAME=test@example.com
+E2E_PASSWORD=test_password
+```
+
+**Ważne**: Używaj service role key z odpowiednimi uprawnieniami do usuwania danych. 
