@@ -1,27 +1,28 @@
 import React, { useState } from "react";
 import { AuthSwitcher } from "./AuthSwitcher";
 import { AuthForm } from "./AuthForm";
+import { logger } from "../../lib/utils";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
 
   const handleModeChange = (newMode: "login" | "register") => {
-    console.log("AuthPage: mode changing from", mode, "to", newMode);
+    logger.debug("AuthPage: mode changing from", mode, "to", newMode);
     setMode(newMode);
   };
 
   const handleSuccess = () => {
-    console.log("Authentication successful");
+    logger.info("Authentication successful");
     // Additional success handling can be added here
   };
 
   const handleError = (errorMessage: string) => {
-    console.error("Authentication error:", errorMessage);
+    logger.error("Authentication error:", errorMessage);
     // Additional error handling can be added here
   };
 
   const handleRegisterSuccess = () => {
-    console.log("Registration successful, switching to login mode");
+    logger.info("Registration successful, switching to login mode");
     setMode("login");
   };
 

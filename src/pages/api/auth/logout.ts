@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerInstance } from "../../../db/supabase.client.ts";
+import { logger } from "../../../lib/utils";
 
 export const prerender = false;
 
@@ -27,7 +28,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       }
     );
   } catch (error) {
-    console.error("Logout error:", error);
+    logger.error("Logout error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

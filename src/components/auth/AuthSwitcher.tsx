@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { logger } from "../../lib/utils";
 
 interface AuthSwitcherProps {
   currentMode: "login" | "register";
@@ -8,7 +9,7 @@ interface AuthSwitcherProps {
 
 export function AuthSwitcher({ currentMode, onModeChange }: AuthSwitcherProps) {
   const handleModeClick = (mode: "login" | "register") => {
-    console.log("Switching to mode:", mode);
+    logger.debug("Switching to mode:", mode);
     onModeChange(mode);
   };
 

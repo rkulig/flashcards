@@ -7,6 +7,7 @@ import type {
   FlashcardsListResponseDto,
   FlashcardUpdateDto,
 } from "../../types";
+import { logger } from "../utils";
 
 /**
  * Service responsible for flashcard operations
@@ -78,7 +79,7 @@ export class FlashcardService {
       .select("id, front, back, source, generation_id, created_at, updated_at");
 
     if (error) {
-      console.error("Error creating flashcards:", error);
+      logger.error("Error creating flashcards:", error);
       throw new Error("Failed to create flashcards", {
         cause: { status: 500, details: error.message },
       });
@@ -107,7 +108,7 @@ export class FlashcardService {
       .eq("user_id", userId);
 
     if (countError) {
-      console.error("Error counting flashcards:", countError);
+      logger.error("Error counting flashcards:", countError);
       throw new Error("Failed to retrieve flashcards count", {
         cause: { status: 500, details: countError.message },
       });
@@ -122,7 +123,7 @@ export class FlashcardService {
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error("Error retrieving flashcards:", error);
+      logger.error("Error retrieving flashcards:", error);
       throw new Error("Failed to retrieve flashcards", {
         cause: { status: 500, details: error.message },
       });
@@ -157,7 +158,7 @@ export class FlashcardService {
       if (error.code === "PGRST116") {
         throw new Error(`Flashcard with ID ${flashcardId} not found`, { cause: { status: 404 } });
       }
-      console.error("Error retrieving flashcard:", error);
+      logger.error("Error retrieving flashcard:", error);
       throw new Error("Failed to retrieve flashcard", {
         cause: { status: 500, details: error.message },
       });
@@ -197,7 +198,7 @@ export class FlashcardService {
       .single();
 
     if (error) {
-      console.error("Error updating flashcard:", error);
+      logger.error("Error updating flashcard:", error);
       throw new Error("Failed to update flashcard", {
         cause: { status: 500, details: error.message },
       });
@@ -224,7 +225,7 @@ export class FlashcardService {
     const { error } = await this.supabase.from("flashcards").delete().eq("id", flashcardId).eq("user_id", userId);
 
     if (error) {
-      console.error("Error deleting flashcard:", error);
+      logger.error("Error deleting flashcard:", error);
       throw new Error("Failed to delete flashcard", {
         cause: { status: 500, details: error.message },
       });

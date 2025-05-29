@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { GenerationService } from "../../lib/services/generation.service";
 import { generateFlashCardsSchema } from "../../lib/schemas/generation.schema";
 import type { GenerateCreateResponseDto } from "../../types";
+import { logger } from "../../lib/utils";
 
 export const prerender = false;
 
@@ -26,7 +27,7 @@ export const GET: APIRoute = async () => {
       },
     });
   } catch (error) {
-    console.error("Error in generations GET endpoint:", error);
+    logger.error("Error in generations GET endpoint:", error);
     // Return general error response
     return new Response(
       JSON.stringify({
@@ -104,7 +105,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Generation process failed:", error);
+    logger.error("Error generating flashcards:", error);
 
     // Handle specific error types
     if (error instanceof Error && error.message === "Generation timed out") {

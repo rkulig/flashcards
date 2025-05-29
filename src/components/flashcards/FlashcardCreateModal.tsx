@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import { logger } from "../../lib/utils";
 
 interface FlashcardCreateModalProps {
   isOpen: boolean;
@@ -57,13 +58,9 @@ const FlashcardCreateModal: React.FC<FlashcardCreateModalProps> = ({ isOpen, onC
       };
 
       await onCreate(newCard);
-
-      // Reset form
-      setFront("");
-      setBack("");
-      setErrors({});
+      resetForm();
     } catch (error) {
-      console.error("Error creating flashcard:", error);
+      logger.error("Error creating flashcard:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,6 +73,12 @@ const FlashcardCreateModal: React.FC<FlashcardCreateModalProps> = ({ isOpen, onC
       setErrors({});
       onClose();
     }
+  };
+
+  const resetForm = () => {
+    setFront("");
+    setBack("");
+    setErrors({});
   };
 
   return (

@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { logger } from "../../lib/utils";
 
 interface FlashcardEditModalProps {
   isOpen: boolean;
@@ -71,7 +72,7 @@ const FlashcardEditModal: React.FC<FlashcardEditModalProps> = ({ isOpen, flashca
 
       await onSave(updated);
     } catch (error) {
-      console.error("Error updating flashcard:", error);
+      logger.error("Error updating flashcard:", error);
     } finally {
       setIsSubmitting(false);
     }

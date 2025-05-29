@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { logger } from "../lib/utils";
 
 interface NavbarProps {
   isAuthenticated: boolean;
@@ -25,12 +26,12 @@ export const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userEmail, onLo
         // Redirect to auth page after logout
         window.location.href = "/auth";
       } else {
-        console.error("Logout failed");
+        logger.error("Logout failed");
         // Still redirect to auth page even if logout failed
         window.location.href = "/auth";
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      logger.error("Logout error:", error);
       // Still redirect to auth page even if logout failed
       window.location.href = "/auth";
     }
