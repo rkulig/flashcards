@@ -1,0 +1,140 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint:
+    name: Code Linting
+    runs-on: ubuntu-latest
+    outputs:
+      lint-status: ${{ steps.lint-check.outcome }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        id: lint-check
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format -- --check
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    if: success()
+    outputs:
+      test-status: ${{ steps.unit-test.outcome }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        id: unit-test
+        run: npm run test:run
+
+  status-comment:
+    name: PR Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+    
+    steps:
+      - name: Create status comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            // Remove previous bot comments
+            for (const comment of comments) {
+              if (comment.user.type === 'Bot' && comment.body.includes('🔍 Pull Request Validation Results')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            const lintStatus = '${{ needs.lint.result }}';
+            const unitTestStatus = '${{ needs.unit-tests.result }}';
+
+            const getStatusIcon = (status) => {
+              switch(status) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'cancelled': return '⏹️';
+                case 'skipped': return '⏭️';
+                default: return '❓';
+              }
+            };
+
+            const getStatusText = (status) => {
+              switch(status) {
+                case 'success': return 'Passed';
+                case 'failure': return 'Failed';
+                case 'cancelled': return 'Cancelled';
+                case 'skipped': return 'Skipped';
+                default: return 'Unknown';
+              }
+            };
+
+            const overallStatus = (lintStatus === 'success' && unitTestStatus === 'success') ? '✅ All checks passed!' : '❌ Some checks failed';
+
+            const commentBody = `## 🔍 Pull Request Validation Results
+
+            ${overallStatus}
+
+            ### Check Results:
+            | Check | Status | Result |
+            |-------|--------|---------|
+            | Linting | ${getStatusIcon(lintStatus)} | ${getStatusText(lintStatus)} |
+            | Unit Tests | ${getStatusIcon(unitTestStatus)} | ${getStatusText(unitTestStatus)} |
+
+            ### Details:
+            - **Commit SHA:** ${context.sha.substring(0, 7)}
+            - **Workflow Run:** [View Details](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+            ---
+            *This comment is automatically updated with each push to the PR.*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            }); 
