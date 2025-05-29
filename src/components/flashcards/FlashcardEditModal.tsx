@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { FlashcardDto, FlashcardUpdateDto, Source } from "../../types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -93,6 +93,7 @@ const FlashcardEditModal: React.FC<FlashcardEditModalProps> = ({ isOpen, flashca
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edytuj fiszkę</DialogTitle>
+          <DialogDescription>Zmodyfikuj zawartość fiszki lub zmień jej źródło pochodzenia.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

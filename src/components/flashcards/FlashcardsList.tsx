@@ -11,7 +11,7 @@ interface FlashcardsListProps {
 const FlashcardsList: React.FC<FlashcardsListProps> = ({ flashcards, onEdit, onDelete }) => {
   if (flashcards.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500" data-testid="flashcards-empty-state">
         <p>Nie masz jeszcze żadnych fiszek.</p>
         <p>Kliknij &ldquo;Dodaj nową fiszkę&rdquo; aby utworzyć pierwszą.</p>
       </div>
@@ -19,9 +19,13 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({ flashcards, onEdit, onD
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="flashcards-list">
       {flashcards.map((flashcard) => (
-        <div key={flashcard.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div
+          key={flashcard.id}
+          className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+          data-testid="flashcard-item"
+        >
           <div className="mb-4">
             <div className="text-sm text-gray-500 mb-2">Przód:</div>
             <div className="font-medium mb-3">{flashcard.front}</div>
